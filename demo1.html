@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Progressive Loading Demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        background: #f5f5f5;
+      }
+      
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .progressive_container {
+        margin-top: 10px;
+      }
+
+      .progressive_bar {
+        height: 4px;
+        background-color: #646cff;
+        transition: width 0.2s ease-in-out;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progressive_meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        margin-bottom: 4px;
+      }
+
+      .progressive_meta p {
+        margin: 0;
+      }
+
+      button {
+        background: #646cff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      button:hover {
+        background: #535bf2;
+      }
+    </style>
+    <!-- Include the JSZip library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Progressive Loading Demo</h1>
+      <button id="processBtn">Process ZIP File</button>
+      <div id="progressContainer"></div>
+    </div>
+    <script type="module">
+      import { ProgressiveLoader } from './progressive.js';
+      const container = document.getElementById('progressContainer');
+      const loader = new ProgressiveLoader(container);
+
+      document.getElementById('processBtn').addEventListener('click', async () => {
+        try {
+          // 1. Fetch the zip file
+          const response = await loader.fetch(
+            'https://raw.githubusercontent.com/sbamboo/MinecraftCustomClient/main/v2/Repo/Packages/1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing',
+            "Downloading 1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing...",
+            true
+          );
+          const zipBlob = await response.blob();
+
+          // 2. Unzip the content
+          const files = await loader.unzip(
+            zipBlob,
+            "Unzipping 1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing...",
+            true
+          );
+
+          // 3. Parse and log the listing.json
+          if (files['listing.json']) {
+            const text = await files['listing.json'].text();
+            const json = JSON.parse(text);
+            console.log('Listing JSON:', json);
+          } else {
+            console.error('listing.json not found in the zip file');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          container.innerHTML += `<p style="color: red">Error: ${error.message}</p>`;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Json Viewer Demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        background: #f5f5f5;
+      }
+      
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .progressive_container {
+        margin-top: 10px;
+      }
+
+      .progressive_bar {
+        height: 4px;
+        background-color: #646cff;
+        transition: width 0.2s ease-in-out;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progressive_meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        margin-bottom: 4px;
+      }
+
+      .progressive_meta p {
+        margin: 0;
+      }
+
+      .url-input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      button {
+        background: #646cff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      button:hover {
+        background: #535bf2;
+      }
+
+      pre {
+        background: #1e1e1e;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+        color: #d4d4d4;
+        line-height: 1.5;
+      }
+
+      code {
+        font-family: 'Courier New', Courier, monospace;
+      }
+
+      /* JSON Syntax Highlighting */
+      .json-string { color: #ce9178; }
+      .json-number { color: #b5cea8; }
+      .json-boolean { color: #569cd6; }
+      .json-null { color: #569cd6; }
+      .json-key { color: #9cdcfe; }
+      .json-bracket { color: #d4d4d4; }
+      .json-comma { color: #d4d4d4; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Json Viewer Demo</h1>
+      <div id="urlInput" style="display: none;">
+        <input type="text" class="url-input" placeholder="Enter URL to fetch" />
+        <button onclick="processUrl()">Load File</button>
+      </div>
+      <div id="progressContainer"></div>
+      <div id="content"></div>
+    </div>
+    <script type="module">
+      import { ProgressiveLoader } from './progressive.js';
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const url = urlParams.get('url');
+      const showFilename = urlParams.get('show_filename') === 'true' || urlParams.get('show_filename') === '1';
+      const showProgress = urlParams.get('show_progress') === 'true' || urlParams.get('show_progress') === '1';
+
+      const container = document.getElementById('progressContainer');
+      const contentDiv = document.getElementById('content');
+      const urlInput = document.getElementById('urlInput');
+      const loader = new ProgressiveLoader(container);
+
+      window.processUrl = async () => {
+        const inputUrl = document.querySelector('.url-input').value;
+        if (inputUrl) {
+          await processFile(inputUrl);
+        }
+      };
+
+      async function processFile(fileUrl) {
+        try {
+          const operation_name = showFilename ? fileUrl.split("/").pop() : null;
+          
+          // 1. Fetch the file
+          const response = await loader.fetch(fileUrl, operation_name, showProgress);
+          const blob = await response.blob();
+
+          // Check if it's a zip file by magic numbers
+          const isZip = await checkIfZip(blob);
+
+          if (isZip) {
+            // Handle zip file
+            const files = await loader.unzip(blob, operation_name, showProgress);
+
+            // Parse and display listing.json if it exists
+            if (files['listing.json']) {
+              const text = await files['listing.json'].text();
+              const json = JSON.parse(text);
+              displayJson(json);
+            } else {
+              // Display first JSON file found
+              for (const [filename, fileBlob] of Object.entries(files)) {
+                if (filename.endsWith('.json')) {
+                  const text = await fileBlob.text();
+                  const json = JSON.parse(text);
+                  displayJson(json);
+                  break;
+                }
+              }
+            }
+          } else {
+            // Handle as JSON file
+            const text = await blob.text();
+            const json = JSON.parse(text);
+            displayJson(json);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          contentDiv.innerHTML = `<p style="color: red">Error: ${error.message}</p>`;
+        }
+      }
+
+      async function checkIfZip(blob) {
+        const arr = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+        return arr[0] === 0x50 && arr[1] === 0x4b && arr[2] === 0x03 && arr[3] === 0x04;
+      }
+
+      function syntaxHighlight(json) {
+        if (typeof json !== 'string') {
+          json = JSON.stringify(json, null, 2);
+        }
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+          let cls = 'json-number';
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+              cls = 'json-key';
+              // Remove the colon from the key
+              match = match.slice(0, -1) + '<span class="json-comma">:</span>';
+            } else {
+              cls = 'json-string';
+            }
+          } else if (/true|false/.test(match)) {
+            cls = 'json-boolean';
+          } else if (/null/.test(match)) {
+            cls = 'json-null';
+          }
+          return '<span class="' + cls + '">' + match + '</span>';
+        })
+        .replace(/[[\]{}]/g, function(match) {
+          return '<span class="json-bracket">' + match + '</span>';
+        })
+        .replace(/,/g, '<span class="json-comma">,</span>');
+      }
+
+      function displayJson(json) {
+        const highlighted = syntaxHighlight(json);
+        contentDiv.innerHTML = `<pre><code>${highlighted}</code></pre>`;
+      }
+
+      // Start processing if URL is provided, otherwise show input
+      if (url) {
+        processFile(url);
+      } else {
+        urlInput.style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
