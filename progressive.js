@@ -1,3 +1,5 @@
+// Progressive is written by Simon Kalmi Claesson
+
 /**
  * Represents a single progress bar UI component
  */
