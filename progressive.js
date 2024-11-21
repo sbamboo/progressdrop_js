@@ -116,17 +116,17 @@ class ProgressBar {
             _obj_: this,
         }
     }
-    }
+}
 
-    /**
-    * ProgressiveLoader class for handling progress bars and loading animations
-    * Supports file downloads, zip operations, and time-based progress updates
-    */
-    export class ProgressiveLoader {
-    /**
-     * Creates a new ProgressiveLoader instance
-     * @param {HTMLElement} parentElement - Container element for progress bars
-     */
+/**
+* ProgressiveLoader class for handling progress bars and loading animations
+* Supports file downloads, zip operations, and time-based progress updates
+*/
+class ProgressiveLoader {
+/**
+ * Creates a new ProgressiveLoader instance
+ * @param {HTMLElement} parentElement - Container element for progress bars
+ */
     constructor(parentElement) {
         this.parentElement = parentElement;
         this.progressBars = [];
