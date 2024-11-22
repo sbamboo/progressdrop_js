@@ -205,7 +205,7 @@ class ProgressLoader {
     
         const out_response = new Response(stream);
         if (yieldProgress === true) {
-            return [out_response, progress];
+            out_response._progressdrop_obj_ = progress;
         }
         return out_response;
     }
@@ -251,7 +251,7 @@ class ProgressLoader {
         }
 
         if (yieldProgress === true) {
-            return [result, progress];
+            result._progressdrop_obj_ = progress;
         }
         return result;
     }
@@ -285,10 +285,12 @@ class ProgressLoader {
             progress.complete();
         }
 
+        const out_response = await zip.generateAsync({type: 'blob'});
         if (yieldProgress === true) {
-            return [await zip.generateAsync({type: 'blob'}), progress];
+            out_response._progressdrop_obj_ = progress;
+            return out_response;
         }
-        return await zip.generateAsync({type: 'blob'});
+        return out_response;
     }
 
     /**
@@ -329,7 +331,7 @@ class ProgressLoader {
         });
 
         if (yieldProgress === true) {
-            return [out_response, progress];
+            out_response._progressdrop_obj_ = progress;
         }
         return out_response;
     }
