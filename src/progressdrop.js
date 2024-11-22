@@ -116,6 +116,7 @@ class ProgressBar {
     getMethods() {
         return {
             update: (value) => this.update(value),
+            updateSameValue: () => this.updateSameValue(),
             progress: (amount) => this.progress(amount),
             complete: () => this.complete(),
             reset: () => this.reset(),
