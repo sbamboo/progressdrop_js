@@ -1,4 +1,4 @@
-// Progressive is written by Simon Kalmi Claesson
+// ProgressDrop is written by Simon Kalmi Claesson
 
 /**
  * Represents a single progress bar UI component
@@ -21,16 +21,16 @@ class ProgressBar {
 
         // Create DOM elements
         this.progressContainer = document.createElement('div');
-        this.progressContainer.className = "progressive_container";
+        this.progressContainer.className = "progressdrop_container";
         this.progressContainer.style.width = '100%';
         
         this.progressBar = document.createElement('div');
-        this.progressBar.className = 'progressive_bar';
+        this.progressBar.className = 'progressdrop_bar';
         this.progressBar.style.width = '0%';
     
         if (name || showProgress) {
             this.metaContainer = document.createElement('div');
-            this.metaContainer.className = 'progressive_meta';
+            this.metaContainer.className = 'progressdrop_meta';
             
             const operationText = document.createElement('p');
             operationText.textContent = name;
@@ -119,12 +119,12 @@ class ProgressBar {
 }
 
 /**
-* ProgressiveLoader class for handling progress bars and loading animations
+* ProgressLoader class for handling progress bars and loading animations
 * Supports file downloads, zip operations, and time-based progress updates
 */
-class ProgressiveLoader {
+class ProgressLoader {
 /**
- * Creates a new ProgressiveLoader instance
+ * Creates a new ProgressLoader instance
  * @param {HTMLElement} parentElement - Container element for progress bars
  */
     constructor(parentElement) {
@@ -133,7 +133,7 @@ class ProgressiveLoader {
     }
 
     /**
-     * Goes trough all progress bars created by the ProgressiveLoader instance, and calls .cleanUp() on them
+     * Goes trough all progress bars created by the ProgressLoader instance, and calls .cleanUp() on them
      */
     cleanUpAll() {
         this.progressBars.forEach((bar) => {

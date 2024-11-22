@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Progressive Loading Demo</title>
+    <title>Progressdrop Loading Demo</title>
     <style>
       body {
         font-family: system-ui, -apple-system, sans-serif;
@@ -58,19 +58,19 @@
         background: #535bf2;
       }
     </style>
+    <script src="./progressdrop.js"></script>
     <!-- Include the JSZip library from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   </head>
   <body>
     <div class="container">
-      <h1>Progressive Loading Demo</h1>
+      <h1>Progressdrop Loading Demo</h1>
       <button id="processBtn">Process ZIP File</button>
       <div id="progressContainer"></div>
     </div>
     <script type="module">
-      import { ProgressiveLoader } from './progressive.js';
       const container = document.getElementById('progressContainer');
-      const loader = new ProgressiveLoader(container);
+      const loader = new ProgressLoader(container);
 
       document.getElementById('processBtn').addEventListener('click', async () => {
         try {

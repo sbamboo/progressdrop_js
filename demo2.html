@@ -88,6 +88,7 @@
       .json-bracket { color: #d4d4d4; }
       .json-comma { color: #d4d4d4; }
     </style>
+    <script src="./progressdrop.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   </head>
   <body>
@@ -101,7 +102,6 @@
       <div id="content"></div>
     </div>
     <script type="module">
-      import { ProgressiveLoader } from './progressive.js';
 
       const urlParams = new URLSearchParams(window.location.search);
       const url = urlParams.get('url');
@@ -111,7 +111,7 @@
       const container = document.getElementById('progressContainer');
       const contentDiv = document.getElementById('content');
       const urlInput = document.getElementById('urlInput');
-      const loader = new ProgressiveLoader(container);
+      const loader = new ProgressLoader(container);
 
       window.processUrl = async () => {
         const inputUrl = document.querySelector('.url-input').value;
