@@ -72,6 +72,13 @@ class ProgressBar {
     }
 
     /**
+     * Updates the progress without changing the current value
+     */
+    updateSameValue() {
+        this.update(this.currentValue);
+    }
+
+    /**
      * Increments the current value and updates the progress bar
      * @param {number} amount - Amount to increment
      */
@@ -206,6 +213,7 @@ class ProgressLoader {
         const out_response = new Response(stream);
         if (yieldProgress === true) {
             out_response._progressdrop_obj_ = progress;
+            out_response.getProgressObj = ()=>{return progress};
         }
         return out_response;
     }
@@ -252,6 +260,7 @@ class ProgressLoader {
 
         if (yieldProgress === true) {
             result._progressdrop_obj_ = progress;
+            result.getProgressObj = ()=>{return progress};
         }
         return result;
     }
@@ -288,6 +297,7 @@ class ProgressLoader {
         const out_response = await zip.generateAsync({type: 'blob'});
         if (yieldProgress === true) {
             out_response._progressdrop_obj_ = progress;
+            out_response.getProgressObj = ()=>{return progress};
             return out_response;
         }
         return out_response;
@@ -332,6 +342,7 @@ class ProgressLoader {
 
         if (yieldProgress === true) {
             out_response._progressdrop_obj_ = progress;
+            out_response.getProgressObj = ()=>{return progress};
         }
         return out_response;
     }
