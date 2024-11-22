@@ -32,13 +32,13 @@ class ProgressBar {
             this.metaContainer = document.createElement('div');
             this.metaContainer.className = 'progressdrop_meta';
             
-            const operationText = document.createElement('p');
-            operationText.textContent = name;
+            this.operationText = document.createElement('p');
+            this.operationText.textContent = name;
             
             this.percentageText = document.createElement('p');
             this.percentageText.textContent = showProgress ? '0%' : '';
             
-            this.metaContainer.appendChild(operationText);
+            this.metaContainer.appendChild(this.operationText);
             this.metaContainer.appendChild(this.percentageText);
             this.progressContainer.appendChild(this.metaContainer);
         }
@@ -76,6 +76,15 @@ class ProgressBar {
      */
     updateSameValue() {
         this.update(this.currentValue);
+    }
+
+    /**
+     * Updates the name of the progressbar
+     */
+    updateName(name) {
+        if (this.metaContainer) {
+            this.operationText.textContent = name;
+        }
     }
 
     /**
@@ -117,6 +126,7 @@ class ProgressBar {
         return {
             update: (value) => this.update(value),
             updateSameValue: () => this.updateSameValue(),
+            updateName: (name) => this.updateName(name),
             progress: (amount) => this.progress(amount),
             complete: () => this.complete(),
             reset: () => this.reset(),
