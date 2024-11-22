@@ -162,7 +162,7 @@ class ProgressLoader {
      * @param {boolean} showProgress - Whether to show percentage
      * @returns {Promise<Response>} Fetch response
      */
-    async fetch(url, name=null, showProgress=true, autoClean=true, safeNoBody=false) {
+    async fetch(url, name=null, showProgress=true, autoClean=true, safeNoBody=false, yieldProgress=false) {
         const progressName = name ? name : 'Downloading...';
         const progress = this.createProgressBar(progressName, showProgress);
         
@@ -203,7 +203,11 @@ class ProgressLoader {
             }
         });
     
-        return new Response(stream);
+        const out_response = new Response(stream);
+        if (yieldProgress === true) {
+            return [out_response, progress];
+        }
+        return out_response;
     }
 
     /**
@@ -213,7 +217,7 @@ class ProgressLoader {
      * @param {boolean} showProgress - Whether to show percentage
      * @returns {Promise<Object>} Extracted files
      */
-    async unzip(zipBlob, name=null, showProgress=true, autoClean=true) {
+    async unzip(zipBlob, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
         const progressName = name ? name : 'Unzipping...';
         const progress = this.createProgressBar(progressName, showProgress);
         
@@ -245,6 +249,10 @@ class ProgressLoader {
         } else {
             progress.complete();
         }
+
+        if (yieldProgress === true) {
+            return [result, progress];
+        }
         return result;
     }
 
@@ -255,7 +263,7 @@ class ProgressLoader {
      * @param {boolean} showProgress - Whether to show percentage
      * @returns {Promise<Blob>} Zipped file as blob
      */
-    async zip(blobs, name=null, showProgress=true, autoClean=true) {
+    async zip(blobs, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
         const progressName = name ? name : 'Zipping...';
         const progress = this.createProgressBar(progressName, showProgress);
         
@@ -276,6 +284,10 @@ class ProgressLoader {
         } else {
             progress.complete();
         }
+
+        if (yieldProgress === true) {
+            return [await zip.generateAsync({type: 'blob'}), progress];
+        }
         return await zip.generateAsync({type: 'blob'});
     }
 
@@ -287,14 +299,14 @@ class ProgressLoader {
      * @param {boolean} showProgress - Whether to show percentage
      * @returns {Promise<void>}
      */
-    async timeDelay(milliseconds, updateDelay, name=null, showProgress=true, autoClean=true) {
+    async timeDelay(milliseconds, updateDelay, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
         const progressName = name ? name : 'Processing...';
         const progress = this.createProgressBar(progressName, showProgress, 0, milliseconds);
         
         const startTime = Date.now();
         const endTime = startTime + milliseconds;
     
-        return new Promise((resolve) => {
+        const out_response = new Promise((resolve) => {
             const updateProgress = () => {
                 const currentTime = Date.now();
                 const elapsed = currentTime - startTime;
@@ -315,5 +327,10 @@ class ProgressLoader {
         
             updateProgress();
         });
+
+        if (yieldProgress === true) {
+            return [out_response, progress];
+        }
+        return out_response;
     }
 }
