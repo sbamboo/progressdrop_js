@@ -1,4 +1,4 @@
-# Progressive.JS
+# Progressdrop.JS
 
 ### Written by: Simon Kalmi Claesson
 
