@@ -96,7 +96,7 @@ class ProgressBar {
     }
 
     /**
-     * Completes and removes the progress bar
+     * Completes without removing the progress bar
      */
     complete() {
         this.update(this.end);
