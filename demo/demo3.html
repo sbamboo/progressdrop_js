@@ -62,7 +62,7 @@
     <!-- Include the JSZip library from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <!-- Include the JSTar library from CDN -->
-    <script src="https://cdn.jsdelivr.net/gh/chriswininger/jstar/jstar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/ankitrohatgi/tarballjs/tarball.js"></script>
   </head>
   <body>
     <div class="container">
@@ -76,29 +76,21 @@
 
       document.getElementById('processBtn').addEventListener('click', async () => {
         try {
-          // 1. Fetch the zip file
+          // 1. Fetch the tar file
           const response = await loader.fetch(
-            'https://raw.githubusercontent.com/sbamboo/MinecraftCustomClient/main/v2/Repo/Packages/1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing',
-            "Downloading 1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing...",
+            'https://corsproxy.io/?url=https://github.com/sbamboo/progressdrop_js/raw/refs/heads/main/demo/sample_17MB.tar',
+            "Downloading sample_17MB.tar...",
             true
           );
-          const zipBlob = await response.blob();
+          const tarBlob = await response.blob();
 
-          // 2. Unzip the content
-          const files = await loader.unzip(
-            zipBlob,
-            "Unzipping 1.21.1_Community-Client-U3.B2.E_2024-09-12_18-33-55-quickcompile.mListing...",
+          // 2. Extract the content
+          const files = await loader.untar(
+            tarBlob,
+            "Extracting sample_17MB.tar...",
             true
           );
-
-          // 3. Parse and log the listing.json
-          if (files['listing.json']) {
-            const text = await files['listing.json'].text();
-            const json = JSON.parse(text);
-            console.log('Listing JSON:', json);
-          } else {
-            console.error('listing.json not found in the zip file');
-          }
+          console.log(files);
         } catch (error) {
           console.error('Error:', error);
           container.innerHTML += `<p style="color: red">Error: ${error.message}</p>`;

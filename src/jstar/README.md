@@ -1,5 +1,5 @@
 Include
 ```HTML
-<script src="https://unpkg.com/jstar/dist/jstar.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ankitrohatgi/tarballjs/tarballjs.js"></script>
 ```
 to use this.
