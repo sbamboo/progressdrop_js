@@ -79,7 +79,7 @@
           // 1. Fetch the tar file
           const response = await loader.fetch(
             'https://corsproxy.io/?url=https://github.com/sbamboo/progressdrop_js/raw/refs/heads/main/demo/sample2_17MB.tar',
-            "Downloading samples_17MB.tar...",
+            "Downloading sample2_17MB.tar...",
             true
           );
           const tarBlob = await response.blob();
@@ -87,7 +87,7 @@
           // 2. Extract the content
           const files = await loader.untar(
             tarBlob,
-            "Extracting samples_17MB.tar...",
+            "Extracting sample2_17MB.tar...",
             true
           );
           console.log(files);
