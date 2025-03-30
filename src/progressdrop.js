@@ -18,6 +18,7 @@ class ProgressBar {
         this.currentValue = start;
         this.container = container;
         this.showProgress = showProgress;
+        this.completed = false;
 
         // Create DOM elements
         this.progressContainer = document.createElement('div');
@@ -99,6 +100,7 @@ class ProgressBar {
      * Completes without removing the progress bar
      */
     complete() {
+        this.completed = true;
         this.update(this.end);
     }
 
@@ -106,6 +108,7 @@ class ProgressBar {
      * Resets the progress bar
      */
     reset() {
+        this.completed = false;
         this.update(this.start);
     }
 
@@ -120,6 +123,14 @@ class ProgressBar {
     }
 
     /**
+     * Removes the progressbar
+     */
+    remove() {
+        this.completed = true;
+        this.progressContainer.remove();
+    }
+
+    /**
      * Returns the methods that is needed to controll the progress bar
      */
     getMethods() {
@@ -131,6 +142,7 @@ class ProgressBar {
             complete: () => this.complete(),
             reset: () => this.reset(),
             cleanUp: () => this.cleanUp(),
+            remove: () => this.remove(),
             _obj_: this,
         }
     }
@@ -156,6 +168,15 @@ class ProgressLoader {
     cleanUpAll() {
         this.progressBars.forEach((bar) => {
             bar.cleanUp();
+        });
+    }
+
+    /**
+     * Goes trough all progress bars created by the ProgressLoader instance, and calls .remove() on them
+     */
+    removeAll() {
+        this.progressBars.forEach((bar) => {
+            bar.remove();
         });
     }
 
