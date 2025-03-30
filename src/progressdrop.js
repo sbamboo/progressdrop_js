@@ -255,7 +255,7 @@ class ProgressLoader {
      * @param {Blob} zipBlob - Zip file as blob
      * @param {string} name - Operation name (optional)
      * @param {boolean} showProgress - Whether to show percentage
-     * @returns {Promise<Object>} Extracted files
+     * @returns {Promise<Object>} Extracted files as an object, where keys are filenames and values are Blobs
      */
     async unzip(zipBlob, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
         const progressName = name ? name : 'Unzipping...';
@@ -299,7 +299,7 @@ class ProgressLoader {
 
     /**
      * Creates a zip file with progress tracking
-     * @param {Object} blobs - Files to zip
+     * @param {Object} blobs - Files to zip, where keys are filenames and values are Blobs or ArrayBuffers
      * @param {string} name - Operation name (optional)
      * @param {boolean} showProgress - Whether to show percentage
      * @returns {Promise<Blob>} Zipped file as blob
@@ -314,23 +314,133 @@ class ProgressLoader {
         const total = entries.length;
         let processed = 0;
     
+        // Process files
+        progress.updateName(progressName + "(Adding files)")
         for (const [filename, blob] of entries) {
             zip.file(filename, blob);
             processed++;
             progress.update((processed / total) * 100);
         }
     
+        // Write blob
+        if (showProgress) {
+            progress.reset();
+            progress.updateName(progressName + "(Writing blob)");
+        }
+        const out_response = await zip.generateAsync(
+            {type: 'blob'},
+            showProgress ? (p) => { progress.update(p); } : undefined
+        );
+    
+        // Auto clean?
+        if (autoClean) {
+            progress.cleanUp();
+        } else {
+            progress.complete();
+        }
+     
+        // Yield progess?
+        if (yieldProgress === true) {
+            out_response._progressdrop_obj_ = progress;
+            out_response.getProgressObj = ()=>{return progress};
+        }
+        return out_response;
+    }
+
+    /**
+     * Extracts files from a tar blob with progress tracking
+     * @param {Blob} tarBlob - Tar file as a blob
+     * @param {string} name - Operation name (optional)
+     * @param {boolean} showProgress - Whether to show percentage
+     * @returns {Promise<Object>} Extracted files as an object, where keys are filenames and values are Blobs
+     */
+    async untar(tarBlob, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
+        const progressName = name ? name : "Extracting Tar...";
+        const progress = this.createProgressBar(progressName, showProgress);
+
+        const arrayBuffer = await tarBlob.arrayBuffer();
+        const tarReader = new tarball.TarReader();
+        const fileInfo = tarReader.readArrayBuffer(arrayBuffer);
+
+        const result = {};
+        const total = fileInfo.length;
+        let processed = 0;
+
+        for (const file of fileInfo) {
+            const blob = tarReader.getFileBlob(file.name);
+            result[file.name] = blob;
+            processed++;
+            progress.update((total / processed) * 100);
+        }
+
         if (autoClean) {
             progress.cleanUp();
         } else {
             progress.complete();
         }
 
-        const out_response = await zip.generateAsync({type: 'blob'});
+        if (yieldProgress === true) {
+            result._progressdrop_obj_ = progress;
+            result.getProgressObj = ()=>{return progress};
+        }
+
+        return result;
+    }  
+ 
+    /**
+     * Creates a tar file with progress tracking
+     * @param {Object} blobs - Files to tar, where keys are filenames and values are Blobs or ArrayBuffers
+     * @param {string} name - Operation name (optional)
+     * @param {boolean} showProgress - Whether to show percentage
+     * @returns {Promise<Blob>} Tar file as blob
+     */
+    async tar(blobs, name=null, showProgress=true, autoClean=true, yieldProgress=false) {
+        const progressName = name ? name : "Creating Tar...";
+        const progress = this.createProgressBar(progressName, showProgress);
+    
+        const tarWriter = new tarball.TarWriter();
+        
+        const entries = Object.entries(blobs);
+        const total = entries.length;
+        let processed = 0;
+    
+        // Process files
+        progress.updateName(progressName + "(Adding files)")
+        for (const [filename, fileData] of entries) {
+            if (fileData instanceof Blob) {
+                tarWriter.addFile(filename, fileData);
+            } else if (fileData instanceof ArrayBuffer) {
+                tarWriter.addFileArrayBuffer(filename, fileData);
+            } else {
+                throw new Error(
+                    "Unsupported file type.  Values must be Blob or ArrayBuffer."
+                );
+            }
+
+            processed++;
+            progress.update((processed / total) * 100);
+        }
+    
+        // Write blob
+        if (showProgress) {
+            progress.reset();
+            progress.updateName(progressName + "(Writing blob)");
+        }
+        const out_response = await tarWriter.writeBlob(
+            showProgress ? (p) => { progress.update(p); } : undefined
+        );
+    
+        // Auto clean?
+        if (autoClean) {
+            progress.cleanUp();
+        } else {
+            progress.complete();
+        }
+     
+        // Yield progess?
         if (yieldProgress === true) {
             out_response._progressdrop_obj_ = progress;
             out_response.getProgressObj = ()=>{return progress};
-            return out_response;
         }
         return out_response;
     }
@@ -377,111 +487,5 @@ class ProgressLoader {
             out_response.getProgressObj = ()=>{return progress};
         }
         return out_response;
-    }
- 
-
-    /**
-     * Creates a tar file with progress tracking
-     * @param {Object} files - Files to tar, where keys are filenames and values are Blobs or ArrayBuffers
-     * @param {string} name - Operation name (optional)
-     * @param {boolean} showProgress - Whether to show percentage
-     * @returns {Promise<Blob>} Tar file as blob
-     */
-    async tar(
-        files,
-        name = null,
-        showProgress = true,
-        autoClean = true,
-        yieldProgress = false
-    ) {
-        const progressName = name ? name : "Creating Tar...";
-        const progress = this.createProgressBar(progressName, showProgress);
-
-        const totalFiles = Object.keys(files).length;
-        let processedFiles = 0;
-
-        const tarball = new jstar.Tarball();
-
-        for (const filename in files) {
-            if (files.hasOwnProperty(filename)) {
-                const fileData = files[filename];
-
-                let buffer;
-                if (fileData instanceof Blob) {
-                    buffer = await fileData.arrayBuffer();
-                } else if (fileData instanceof ArrayBuffer) {
-                    buffer = fileData;
-                } else {
-                    throw new Error(
-                        "Unsupported file type.  Values must be Blob or ArrayBuffer."
-                    );
-                }
-
-                tarball.addFile(filename, buffer);
-                processedFiles++;
-                progress.update((processedFiles / totalFiles) * 100);
-            }
-        }
-
-        const tarBlob = new Blob([tarball.finish()], {
-            type: "application/x-tar",
-        });
-
-        if (autoClean) {
-            progress.cleanUp();
-        } else {
-            progress.complete();
-        }
-
-        if (yieldProgress === true) {
-            tarBlob._progressdrop_obj_ = progress;
-            tarBlob.getProgressObj = () => progress;
-        }
-
-        return tarBlob;
-    }
-
-
-    /**
-     * Extracts files from a tar blob with progress tracking
-     * @param {Blob} tarBlob - Tar file as a blob
-     * @param {string} name - Operation name (optional)
-     * @param {boolean} showProgress - Whether to show percentage
-     * @returns {Promise<Object>} Extracted files as an object, where keys are filenames and values are Blobs
-     */
-    async untar(
-        tarBlob,
-        name = null,
-        showProgress = true,
-        autoClean = true,
-        yieldProgress = false
-    ) {
-        const progressName = name ? name : "Extracting Tar...";
-        const progress = this.createProgressBar(progressName, showProgress);
-
-        const arrayBuffer = await tarBlob.arrayBuffer();
-        const tarball = new jstar.Tarball(arrayBuffer);
-        const files = {};
-        let index = 0;
-        const fileCount = tarball.files.length;
-
-        for (const file of tarball.files) {
-            files[file.filename] = new Blob([file.content]);
-            index++;
-            progress.update((index / fileCount) * 100);
-        }
-
-        if (autoClean) {
-            progress.cleanUp();
-        } else {
-            progress.complete();
-        }
-
-        if (yieldProgress === true) {
-            files._progressdrop_obj_ = progress;
-            files.getProgressObj = () => progress;
-        }
-
-        return files;
     }
 }
